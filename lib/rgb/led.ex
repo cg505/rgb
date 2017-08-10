@@ -37,7 +37,6 @@ defmodule Rgb.Led do
   end
 
   def updates(state, [:custom | rest]) do
-    IO.puts("custom state")
     case state do
       {:custom, _} -> state
       _ -> updates(state, rest)
@@ -45,19 +44,17 @@ defmodule Rgb.Led do
   end
 
   def updates(_state, [:default | _]) do
-    IO.puts("default state")
     :default
   end
 
   def loop(state, timeout) do
-    IO.puts("hit loop with state")
-    IO.inspect(state)
     next_state = receive do
       inst -> handle_in(inst)
     after
       timeout -> updates(state)
     end
 
+    IO.puts("next state")
     IO.inspect(next_state)
 
     light(next_state)

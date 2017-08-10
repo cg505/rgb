@@ -6,36 +6,33 @@ defmodule Rgb.Serial do
       Nerves.UART.enumerate()
       |> Enum.find(:error, fn{_, v} -> v[:vendor_id] == 9025 end)
 
-    {:ok, pid} = Nerves.UART.start_link
-    :ok = Nerves.UART.open(pid, tty, active: false)
-    IO.puts "starting this shit"
     Agent.start_link fn ->
-      IO.puts "inside startlink"
-      {pid, 0}
+      {:ok, pid} = Nerves.UART.start_link
+      :ok = Nerves.UART.open(pid, tty, active: false)
+      pid
     end, name: __MODULE__
   end
 
-  def reset(force \\ false) do
-    Agent.update __MODULE__, fn {pid, count} ->
-      if force || count > 10 do
-        Nerves.UART.write(pid, [0, 0, 0, 0, 0, 1])
-        {pid, 0}
-      else
-        {pid, count}
+  def try_write(pid, count, red, green, blue) do
+    # if we've tried more than 5 times just give up
+    unless count > 5 do
+      # clear out any lingering output
+      Nerves.UART.read(pid, 0)
+      Nerves.UART.write(pid, [0, 1, red, green, blue, 1, red, green, blue])
+      {:ok, read} = Nerves.UART.read(pid, 15)
+      unless (read == <<rem(red + green + blue, 256)>>) do
+        # flush any possible current state
+        Nerves.UART.write(pid, [0, 0, 0, 0])
+        try_write(pid, count + 1, red, green, blue)
       end
     end
   end
 
   def write(red, green, blue) do
-    array = if((red == 0 && green == 0 && blue == 0), do: [0, 0, 0, 1], else: [red, green, blue])
-    if Enum.all?(array, fn x -> x in 0..255 end) do
-      Agent.update __MODULE__, fn {pid, count} ->
-        if count > 10 do
-          Nerves.UART.write(pid, [0, 0, 0, 0, 0, 1])
-        end
-        Nerves.UART.read(pid)
-        Nerves.UART.write(pid, array)
-        {pid, if(count > 10, do: 1, else: count + 1)}
+    if Enum.all?([red, green, blue], fn x -> x in 0..255 end) do
+      Agent.update __MODULE__, fn pid ->
+        try_write(pid, 0, red, green, blue)
+        pid
       end
     else
       {:error, :out_of_range}
