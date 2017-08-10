@@ -81,8 +81,8 @@ defmodule Rgb.Led do
       time in 510..764 -> Rgb.Serial.write(0, 255, time - 510)
       time in 765..1019 -> Rgb.Serial.write(0, 1020 - time, 255)
       time in 1020..1274 -> Rgb.Serial.write(time - 1020, 0, 255)
-      time in 1275..1349 -> Rgb.Serial.write(255, 0, 1350 - time)
+      time in 1275..1529 -> Rgb.Serial.write(255, 0, 1530 - time)
     end
-    loop({:custom, fade: rem((time + 1), 1350)}, 25)
+    loop({:custom, fade: rem((time + 10), 1530)}, 10)
   end
 end
