@@ -8,8 +8,11 @@ defmodule Rgb.Application do
 
     # Define workers and child supervisors to be supervised
     children = [
+      # supervisor(Nerves.UART, []),
       # Start the endpoint when the application starts
       supervisor(RgbWeb.Endpoint, []),
+      supervisor(Rgb.Serial, []),
+      supervisor(Rgb.LedThing, []),
       # Start your own worker by calling: Rgb.Worker.start_link(arg1, arg2, arg3)
       # worker(Rgb.Worker, [arg1, arg2, arg3]),
     ]

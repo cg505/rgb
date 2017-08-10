@@ -13,10 +13,19 @@ defmodule RgbWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", RgbWeb do
-    pipe_through :browser # Use the default browser stack
+  # scope "/", RgbWeb do
+  #   pipe_through :browser # Use the default browser stack
 
-    get "/", PageController, :index
+  #   get "/", PageController, :index
+  # end
+
+  scope "/", RgbWeb do
+    pipe_through :api
+
+    get "/", ApiController, :index
+    post "/", ApiController, :post
+    delete "/", ApiController, :delete
+    post "/fade", ApiController, :fade
   end
 
   # Other scopes may use custom stacks.
